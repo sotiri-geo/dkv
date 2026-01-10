@@ -46,6 +46,8 @@ func TestGetKVStore(t *testing.T) {
 
 		// WHEN fetching for non-existent key k1
 		_, err := s.Get("k1")
+
+		// THEN should return with key not found error
 		if err == nil {
 			t.Fatalf("should error with key not found, got error: %v", err)
 		}
@@ -82,7 +84,7 @@ func TestGetKVStore(t *testing.T) {
 		// WHEN we delete non existent key k1
 		err := s.Delete("k1")
 
-		// THEN should error with key not found
+		// THEN should return with key not found error
 		if err == nil {
 			t.Fatal("should error")
 		}
