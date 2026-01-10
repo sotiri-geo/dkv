@@ -1,0 +1,48 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+
+repos:
+  # Conventional Commits check
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
+
+  # Go hooks
+  - repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-rc.1
+    hooks:
+      # Go formatting
+      - id: go-fmt
+        args: [-w]
+
+      # Go vet for suspicious constructs
+      - id: go-vet-repo-mod
+
+      # golangci-lint for comprehensive linting
+      - id: golangci-lint-repo-mod
+
+  # Additional useful hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Prevent committing large files
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+
+      # Check YAML syntax
+      - id: check-yaml
+
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+
+      # Ensure files end with a newline
+      - id: end-of-file-fixer
