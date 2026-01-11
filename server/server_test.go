@@ -93,3 +93,37 @@ func TestRouterPut(t *testing.T) {
 		t.Errorf("got value %q, want %q", value, requestBody.Value)
 	}
 }
+
+func TestRouterDelete(t *testing.T) {
+	// GIVEN store with key k1 and value v1
+	kvStore := store.NewKVStore()
+	k, v := "k1", "v1"
+	kvStore.Put(k, v)
+
+	svr := server.NewServer(kvStore)
+	tsvr := httptest.NewServer(svr.Routes())
+	defer tsvr.Close()
+
+	// WHEN a DELETE request is made for key k1
+	req, err := http.NewRequest(http.MethodDelete, tsvr.URL+"/kv/k1", nil)
+	if err != nil {
+		t.Fatalf("creating DELETE request: %v", err)
+	}
+
+	c := http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		t.Fatalf("sending DELETE request: %v", err)
+	}
+
+	// THEN response status code 204 with k1 no longer existing in store
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusNoContent)
+	}
+
+	_, err = kvStore.Get(k)
+
+	if err == nil {
+		t.Errorf("key %q still exists in store", k)
+	}
+}

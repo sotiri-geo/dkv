@@ -38,6 +38,7 @@ func (s *Server) Routes() http.Handler {
 	// Adding handlers
 	mux.HandleFunc("GET /kv", s.handleGet)
 	mux.HandleFunc("PUT /kv", s.handlePut)
+	mux.HandleFunc("DELETE /kv/{key}", s.handleDelete)
 	return mux
 }
 
@@ -77,4 +78,21 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 	s.store.Put(req.Key, req.Value)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+
+	if key == "" {
+		http.Error(w, "key cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	err := s.store.Delete(key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
