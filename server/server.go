@@ -36,14 +36,14 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Adding handlers
-	mux.HandleFunc("GET /kv", s.handleGet)
+	mux.HandleFunc("GET /kv/{key}", s.handleGet)
 	mux.HandleFunc("PUT /kv", s.handlePut)
 	mux.HandleFunc("DELETE /kv/{key}", s.handleDelete)
 	return mux
 }
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {
-	key := r.URL.Query().Get("key")
+	key := r.PathValue("key")
 	if key == "" {
 		http.Error(w, "please provide a key to search", http.StatusBadRequest)
 		return

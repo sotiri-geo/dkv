@@ -25,7 +25,7 @@ func TestRouterGet(t *testing.T) {
 	defer tsrv.Close()
 
 	// WHEN making a GET http request
-	resp, err := http.Get(tsrv.URL + "/kv?key=k1")
+	resp, err := http.Get(tsrv.URL + "/kv/k1")
 	if err != nil {
 		t.Fatalf("should not fail: %v", err)
 	}
