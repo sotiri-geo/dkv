@@ -2,6 +2,8 @@ package store_test
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/sotiri-geo/dkv/store"
@@ -92,4 +94,33 @@ func TestGetKVStore(t *testing.T) {
 			t.Errorf("got %+v, want %+v", err, store.ErrKeyNotFound)
 		}
 	})
+}
+
+// Test to verify thread-saftey
+func TestConcurrentAccess(t *testing.T) {
+	// GIVEN empty store
+	s := store.NewKVStore()
+	// GIVEN count 100 k-v pairs
+	want := 100
+	var wg sync.WaitGroup
+
+	// WHEN sending 100 concurrent PUT requests
+	for i := range want {
+		// capture the value (issues with lexical scopes in for loops)
+		idx := i
+		wg.Go(func() {
+			s.Put(
+				fmt.Sprintf("key%d", idx),
+				fmt.Sprintf("value%d", idx),
+			)
+		})
+	}
+
+	wg.Wait()
+
+	// THEN 100 keys should be inserted
+	got := len(s.Data)
+	if got != want {
+		t.Errorf("incorrect key count: got %d, want %d", got, want)
+	}
 }
