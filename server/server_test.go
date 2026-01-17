@@ -56,9 +56,9 @@ func TestRouterPut(t *testing.T) {
 		Key:   "k1",
 		Value: "v1",
 	}
-	svr := server.NewServer(kvStore)
-	tsvr := httptest.NewServer(svr.Routes())
-	defer tsvr.Close()
+	srv := server.NewServer(kvStore)
+	tsrv := httptest.NewServer(srv.Routes())
+	defer tsrv.Close()
 
 	bodyBytes, err := json.Marshal(requestBody)
 	if err != nil {
@@ -66,7 +66,7 @@ func TestRouterPut(t *testing.T) {
 	}
 
 	// WHEN making a PUT request with key k1 and value v1
-	req, err := http.NewRequest(http.MethodPut, tsvr.URL+"/kv", bytes.NewReader(bodyBytes))
+	req, err := http.NewRequest(http.MethodPut, tsrv.URL+"/kv", bytes.NewReader(bodyBytes))
 	if err != nil {
 		t.Fatalf("creating request body: %v", err)
 	}
@@ -100,12 +100,12 @@ func TestRouterDelete(t *testing.T) {
 	k, v := "k1", "v1"
 	kvStore.Put(k, v)
 
-	svr := server.NewServer(kvStore)
-	tsvr := httptest.NewServer(svr.Routes())
-	defer tsvr.Close()
+	srv := server.NewServer(kvStore)
+	tsrv := httptest.NewServer(srv.Routes())
+	defer tsrv.Close()
 
 	// WHEN a DELETE request is made for key k1
-	req, err := http.NewRequest(http.MethodDelete, tsvr.URL+"/kv/k1", nil)
+	req, err := http.NewRequest(http.MethodDelete, tsrv.URL+"/kv/k1", nil)
 	if err != nil {
 		t.Fatalf("creating DELETE request: %v", err)
 	}

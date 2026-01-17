@@ -4,6 +4,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/sotiri-geo/dkv/store"
@@ -56,9 +57,9 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(&GetResponse{value})
-	if err != nil {
-		http.Error(w, fmt.Sprintf("encoding GET response: %v", err), http.StatusInternalServerError)
+	if err := json.NewEncoder(w).Encode(&GetResponse{value}); err != nil {
+		// Log error for now rather than sending it back to the client
+		log.Printf("error enconding response: %v", err)
 	}
 }
 
