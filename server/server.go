@@ -11,7 +11,7 @@ import (
 )
 
 type Server struct {
-	store *store.KVStore
+	db *store.KVStore
 }
 
 type GetResponse struct {
@@ -23,9 +23,9 @@ type PutRequest struct {
 	Value string `json:"value"`
 }
 
-func NewServer(store *store.KVStore) *Server {
+func NewServer(db *store.KVStore) *Server {
 	return &Server{
-		store,
+		db,
 	}
 }
 
@@ -50,7 +50,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := s.store.Get(key)
+	value, err := s.db.Execute(store.NewGetQuery(key))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("key %q not found", key), http.StatusNotFound)
 		return
@@ -76,7 +76,7 @@ func (s *Server) handlePut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.store.Put(req.Key, req.Value)
+	s.db.Apply(store.NewPutCommand(req.Key, req.Value))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }
@@ -88,12 +88,12 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "key cannot be empty", http.StatusBadRequest)
 		return
 	}
-
-	err := s.store.Delete(key)
-	if err != nil {
+	// Validate key exists with query
+	if _, err := s.db.Execute(store.NewGetQuery(key)); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
+	s.db.Apply(store.NewDeleteCommand(key))
 	w.WriteHeader(http.StatusNoContent)
 }

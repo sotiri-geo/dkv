@@ -13,14 +13,14 @@ import (
 
 func TestRouterGet(t *testing.T) {
 	// GIVEN a store with key k1 and value v1
-	kvStore := store.NewKVStore()
+	db := store.NewKVStore()
 	want := server.GetResponse{
 		Value: "v1",
 	}
 	k, v := "k1", "v1"
-	kvStore.Put(k, v)
+	db.Apply(store.NewPutCommand(k, v))
 
-	srv := server.NewServer(kvStore)
+	srv := server.NewServer(db)
 	tsrv := httptest.NewServer(srv.Routes())
 	defer tsrv.Close()
 
@@ -51,12 +51,12 @@ func TestRouterGet(t *testing.T) {
 func TestRouterPut(t *testing.T) {
 	// GIVEN empty store
 	// GIVEN key k1 with value v1
-	kvStore := store.NewKVStore()
+	db := store.NewKVStore()
 	requestBody := server.PutRequest{
 		Key:   "k1",
 		Value: "v1",
 	}
-	srv := server.NewServer(kvStore)
+	srv := server.NewServer(db)
 	tsrv := httptest.NewServer(srv.Routes())
 	defer tsrv.Close()
 
@@ -84,7 +84,7 @@ func TestRouterPut(t *testing.T) {
 		t.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusCreated)
 	}
 
-	value, err := kvStore.Get("k1")
+	value, err := db.Execute(store.NewGetQuery("k1"))
 	if err != nil {
 		t.Fatalf("fetching stored key %q: %v", requestBody.Key, err)
 	}
@@ -96,11 +96,11 @@ func TestRouterPut(t *testing.T) {
 
 func TestRouterDelete(t *testing.T) {
 	// GIVEN store with key k1 and value v1
-	kvStore := store.NewKVStore()
+	db := store.NewKVStore()
 	k, v := "k1", "v1"
-	kvStore.Put(k, v)
+	db.Apply(store.NewPutCommand(k, v))
 
-	srv := server.NewServer(kvStore)
+	srv := server.NewServer(db)
 	tsrv := httptest.NewServer(srv.Routes())
 	defer tsrv.Close()
 
@@ -121,7 +121,7 @@ func TestRouterDelete(t *testing.T) {
 		t.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusNoContent)
 	}
 
-	_, err = kvStore.Get(k)
+	_, err = db.Execute(store.NewGetQuery(k))
 
 	if err == nil {
 		t.Errorf("key %q still exists in store", k)

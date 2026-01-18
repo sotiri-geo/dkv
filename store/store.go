@@ -3,6 +3,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -10,39 +11,49 @@ var ErrKeyNotFound = errors.New("key not found error")
 
 type KVStore struct {
 	mu   sync.RWMutex
-	Data map[string]string
+	data map[string]string
+	log  []Command
 }
 
 func NewKVStore() *KVStore {
 	return &KVStore{
-		Data: make(map[string]string),
+		data: make(map[string]string),
 	}
 }
 
-func (s *KVStore) Put(key, value string) {
+func (s *KVStore) Apply(cmd Command) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Data[key] = value
+
+	// Apply mutable command
+	cmd.Apply(s)
+
+	// Append to changelog
+	s.log = append(s.log, cmd)
 }
 
-func (s *KVStore) Get(key string) (string, error) {
+func (s *KVStore) Execute(query Query) (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	value, exists := s.Data[key]
-	if !exists {
-		return "", ErrKeyNotFound
+
+	value, err := query.Execute(s)
+	if err != nil {
+		return "", fmt.Errorf("executing query: %w", err)
 	}
 
-	return value, nil
+	return value, err
 }
 
-func (s *KVStore) Delete(key string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *KVStore) GetLog() []Command {
+	return s.log
+}
 
-	if _, exists := s.Data[key]; !exists {
-		return ErrKeyNotFound
+func (s *KVStore) Replay() {
+	// Reset store
+	s.data = make(map[string]string)
+
+	// Replay log commands
+	for _, cmd := range s.log {
+		s.Apply(cmd)
 	}
-	delete(s.Data, key)
-	return nil
 }
