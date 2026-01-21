@@ -18,6 +18,7 @@ type KVStore struct {
 func NewKVStore() *KVStore {
 	return &KVStore{
 		data: make(map[string]string),
+		log:  make([]Command, 0),
 	}
 }
 
@@ -45,15 +46,23 @@ func (s *KVStore) Execute(query Query) (string, error) {
 }
 
 func (s *KVStore) GetLog() []Command {
-	return s.log
+	// Add read lock
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// Returning a copy to prevent external modification
+	newLog := make([]Command, len(s.log))
+	copy(newLog, s.log)
+	return newLog
 }
 
 func (s *KVStore) Replay() {
-	// Reset store
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.data = make(map[string]string)
 
-	// Replay log commands
+	// Replay log commands, do not add to the log
 	for _, cmd := range s.log {
-		s.Apply(cmd)
+		cmd.Apply(s)
 	}
 }
