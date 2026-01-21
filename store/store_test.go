@@ -88,9 +88,15 @@ func TestReplay(t *testing.T) {
 	if value != "v2" {
 		t.Errorf("got value %q, want %q", value, "v2")
 	}
+
+	// Logs should be in the same state
+	got := len(s.GetLog())
+	if got != 3 {
+		t.Errorf("logs are inconsistent state: got %d, want %d", got, 3)
+	}
 }
 
-func TestDeterminsm(t *testing.T) {
+func TestDeterminism(t *testing.T) {
 	// GIVEN empty store s1
 	// GIVEN empty store s2
 	// GIVEN commands put k1-v1, put k2-v2, delete v1
@@ -113,8 +119,11 @@ func TestDeterminsm(t *testing.T) {
 	_, err1 := s1.Execute(store.NewGetQuery("k1"))
 	_, err2 := s2.Execute(store.NewGetQuery("k1"))
 
-	if !errors.Is(err1, store.ErrKeyNotFound) && !errors.Is(err2, store.ErrKeyNotFound) {
-		t.Errorf("stores have diverged: err1 %v, err2 %v", err1, err2)
+	if !errors.Is(err1, store.ErrKeyNotFound) {
+		t.Errorf("s1: want error %v, got %v", store.ErrKeyNotFound, err1)
+	}
+	if !errors.Is(err2, store.ErrKeyNotFound) {
+		t.Errorf("s1: want error %v, got %v", store.ErrKeyNotFound, err2)
 	}
 
 	v1, err1 := s1.Execute(store.NewGetQuery("k2"))
